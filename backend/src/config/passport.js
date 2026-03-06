@@ -6,9 +6,8 @@ import { User } from '../models/index.js';
 passport.use(
     new GoogleStrategy(
         {
-            clientID: process.env.GOOGLE_CLIENT_ID || 'your-google-client-id',
-            clientSecret:
-                process.env.GOOGLE_CLIENT_SECRET || 'your-google-client-secret',
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
             callbackURL: 'http://localhost:8000/api/v1/auth/google/callback'
         },
         async (accessToken, refreshToken, profile, done) => {
@@ -16,7 +15,6 @@ passport.use(
                 let user = await User.findOne({
                     where: { google_id: profile.id }
                 });
-
                 if (!user) {
                     const email =
                         profile.emails && profile.emails.length > 0
@@ -49,9 +47,8 @@ passport.use(
 passport.use(
     new GitHubStrategy(
         {
-            clientID: process.env.GITHUB_CLIENT_ID || 'your-github-client-id',
-            clientSecret:
-                process.env.GITHUB_CLIENT_SECRET || 'your-github-client-secret',
+            clientID: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
             callbackURL: 'http://localhost:8000/api/v1/auth/github/callback',
             scope: ['user:email']
         },
@@ -60,7 +57,6 @@ passport.use(
                 let user = await User.findOne({
                     where: { github_id: profile.id }
                 });
-
                 if (!user) {
                     let email = null;
                     if (profile.emails && profile.emails.length > 0) {

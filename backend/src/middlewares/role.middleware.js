@@ -10,25 +10,21 @@ export const checkRole = (allowedRoles) =>
         if (!tripId) {
             throw new ApiError(400, 'Trip ID is missing in request');
         }
-
         const membership = await TripMember.findOne({
             where: {
                 TripId: tripId,
                 UserId: req.user.id
             }
         });
-
         if (!membership) {
             throw new ApiError(403, 'You do not have access to this trip');
         }
-
         if (!allowedRoles.includes(membership.role)) {
             throw new ApiError(
                 403,
                 'You do not have the required permissions to perform this action'
             );
         }
-
         req.tripRole = membership.role;
         next();
     });

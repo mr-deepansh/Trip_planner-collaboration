@@ -15,13 +15,12 @@ async function testApi() {
 
 		// Generate a token
 		const token = user.generateAccessToken();
-
+		// TODO: don't use direct url use variables using env
 		const res = await fetch('http://localhost:8000/api/v1/trips', {
 			headers: {
 				Authorization: `Bearer ${token}`
 			}
 		});
-
 		const data = await res.json();
 		console.log('Success! Status:', res.status, 'Data:', data);
 	} catch (error) {

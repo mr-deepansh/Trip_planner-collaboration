@@ -6,18 +6,17 @@ import { logger } from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') }); // fixed path
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    logging: false // Set to console.log to see SQL queries
+    logging: false
 });
 
 export const connectDB = async () => {
     try {
         await sequelize.authenticate();
         logger.info('PostgreSQL Database Connected Successfully');
-        // Automatically sync tables (in production use migrations instead)
         await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' });
     } catch (error) {
         logger.error(`Unable to connect to the database: ${error.message}`);

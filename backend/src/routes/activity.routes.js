@@ -8,12 +8,10 @@ import {
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { checkRole } from '../middlewares/role.middleware.js';
 
-const router = Router({ mergeParams: true }); // Important: merge params from trip router
-
+const router = Router({ mergeParams: true });
 // Apply auth middleware to all routes
 router.use(verifyJWT);
 
-// Create Activity - needs OWNER or EDITOR access to the trip
 router.post('/', checkRole(['OWNER', 'EDITOR']), createActivity);
 
 // Reorder Activity

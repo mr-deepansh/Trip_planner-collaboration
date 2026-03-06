@@ -51,7 +51,7 @@ const User = sequelize.define(
     }
 );
 
-// Instance methods
+// Instance methods 
 User.prototype.isPasswordCorrect = async function (password) {
     if (!this.password) return false;
     return await bcrypt.compare(password, this.password);
