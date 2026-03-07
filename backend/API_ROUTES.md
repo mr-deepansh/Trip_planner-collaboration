@@ -19,7 +19,7 @@ This document contains a comprehensive list of all the API routes available in t
 - **Request Parameters:** None
 - **Request Body:** None
 - **Response:**
-    - `200 OK`: `{ "status": "success", "message": "API is running" }`
+  - `200 OK`: `{ "status": "success", "message": "API is running" }`
 
 ---
 
@@ -31,17 +31,19 @@ This document contains a comprehensive list of all the API routes available in t
 - **Security:** Public
 - **Request Parameters:** None
 - **Request Body:**
-    ```json
-    {
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "password": "securepassword123"
-    }
-    ```
 
-    - `name` (String, Required)
-    - `email` (String, Required)
-    - `password` (String, Required)
+  ```json
+  {
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "password": "securepassword123"
+  }
+  ```
+
+  - `name` (String, Required)
+  - `email` (String, Required)
+  - `password` (String, Required)
+
 - **Response:** `201 Created` with the registered user's details (password excluded).
 
 ### `POST /api/v1/auth/login`
@@ -50,15 +52,17 @@ This document contains a comprehensive list of all the API routes available in t
 - **Security:** Public
 - **Request Parameters:** None
 - **Request Body:**
-    ```json
-    {
-        "email": "jane@example.com",
-        "password": "securepassword123"
-    }
-    ```
 
-    - `email` (String, Required)
-    - `password` (String, Required)
+  ```json
+  {
+    "email": "jane@example.com",
+    "password": "securepassword123"
+  }
+  ```
+
+  - `email` (String, Required)
+  - `password` (String, Required)
+
 - **Response:** `200 OK` with user details (excluding password) and the `accessToken`. Set-Cookie header is sent.
 
 ### `POST /api/v1/auth/logout`
@@ -109,17 +113,19 @@ _All trip routes require standard JWT authentication._
 - **Security:** Requires JWT Token
 - **Request Parameters:** None
 - **Request Body:**
-    ```json
-    {
-        "title": "Summer Vacation",
-        "start_date": "2026-06-01",
-        "end_date": "2026-06-15"
-    }
-    ```
 
-    - `title` (String, Required)
-    - `start_date` (Date string, Required)
-    - `end_date` (Date string, Required)
+  ```json
+  {
+    "title": "Summer Vacation",
+    "start_date": "2026-06-01",
+    "end_date": "2026-06-15"
+  }
+  ```
+
+  - `title` (String, Required)
+  - `start_date` (Date string, Required)
+  - `end_date` (Date string, Required)
+
 - **Response:** `201 Created` with the newly created trip details.
 
 ### `GET /api/v1/trips/`
@@ -135,7 +141,7 @@ _All trip routes require standard JWT authentication._
 - **Description:** Fetches deeply nested details of a specific trip. The structure includes all corresponding `Day` entities alongside their respective nested `Activity` arrays, securely ordered by date.
 - **Security:** Requires JWT Token & Role Authorization (`OWNER`, `EDITOR`, or `VIEWER` access to the trip).
 - **Request Parameters:**
-    - `tripId` (UUID string, Required)
+  - `tripId` (UUID string, Required)
 - **Request Body:** None
 - **Response:** `200 OK` with the extended Trip entity populated with Days and Activities.
 
@@ -150,25 +156,27 @@ _All activity routes require JWT authentication AND are scoped under a specific 
 - **Description:** Adds a new activity to a specific day within the given trip. It automatically assigns the correct `order_index` at the end of the day's existing activity list.
 - **Security:** Requires JWT Token & Role Authorization (`OWNER` or `EDITOR` access over the trip).
 - **Request Parameters:**
-    - `tripId` (UUID string, Required)
+  - `tripId` (UUID string, Required)
 - **Request Body:**
-    ```json
-    {
-        "dayId": "uuid-for-a-specific-day",
-        "title": "Visit Eiffel Tower",
-        "description": "Book tickets in advance",
-        "start_time": "10:00:00",
-        "end_time": "12:00:00",
-        "type": "sightseeing"
-    }
-    ```
 
-    - `dayId` (UUID string, Required)
-    - `title` (String, Required)
-    - `description` (String, Optional)
-    - `start_time` (Time string, Optional)
-    - `end_time` (Time string, Optional)
-    - `type` (String, Optional)
+  ```json
+  {
+    "dayId": "uuid-for-a-specific-day",
+    "title": "Visit Eiffel Tower",
+    "description": "Book tickets in advance",
+    "start_time": "10:00:00",
+    "end_time": "12:00:00",
+    "type": "sightseeing"
+  }
+  ```
+
+  - `dayId` (UUID string, Required)
+  - `title` (String, Required)
+  - `description` (String, Optional)
+  - `start_time` (Time string, Optional)
+  - `end_time` (Time string, Optional)
+  - `type` (String, Optional)
+
 - **Response:** `201 Created` with the new activity object.
 
 ### `POST /api/v1/trips/:tripId/activities/reorder`
@@ -176,18 +184,20 @@ _All activity routes require JWT authentication AND are scoped under a specific 
 - **Description:** Reorders a subset of activities. Useful for drag-and-drop mechanics to save new indexing orders to the database.
 - **Security:** Requires JWT Token & Role Authorization (`OWNER` or `EDITOR` access over the trip).
 - **Request Parameters:**
-    - `tripId` (UUID string, Required)
+  - `tripId` (UUID string, Required)
 - **Request Body:**
-    ```json
-    {
-        "activities": [
-            { "id": "uuid-activity-1", "order_index": 0 },
-            { "id": "uuid-activity-2", "order_index": 1 }
-        ]
-    }
-    ```
 
-    - `activities` (Array of objects, Required): Each object must define the activity `id` and the new `order_index` (zero-indexed).
+  ```json
+  {
+    "activities": [
+      { "id": "uuid-activity-1", "order_index": 0 },
+      { "id": "uuid-activity-2", "order_index": 1 }
+    ]
+  }
+  ```
+
+  - `activities` (Array of objects, Required): Each object must define the activity `id` and the new `order_index` (zero-indexed).
+
 - **Response:** `200 OK` on successful reorder.
 
 ### `PUT /api/v1/trips/:tripId/activities/:activityId`
@@ -195,8 +205,8 @@ _All activity routes require JWT authentication AND are scoped under a specific 
 - **Description:** Updates details of an existing activity.
 - **Security:** Requires JWT Token & Role Authorization (`OWNER` or `EDITOR` access over the trip).
 - **Request Parameters:**
-    - `tripId` (UUID string, Required)
-    - `activityId` (UUID string, Required)
+  - `tripId` (UUID string, Required)
+  - `activityId` (UUID string, Required)
 - **Request Body:** Any valid fields corresponding to an Activity (e.g., `title`, `description`, `start_time`, `end_time`, `type`, `DayId`, `order_index`).
 - **Response:** `200 OK` with the full modified activity object.
 
@@ -205,7 +215,7 @@ _All activity routes require JWT authentication AND are scoped under a specific 
 - **Description:** Deletes a specific activity permanently.
 - **Security:** Requires JWT Token & Role Authorization (`OWNER` or `EDITOR` access over the trip).
 - **Request Parameters:**
-    - `tripId` (UUID string, Required)
-    - `activityId` (UUID string, Required)
+  - `tripId` (UUID string, Required)
+  - `activityId` (UUID string, Required)
 - **Request Body:** None
 - **Response:** `200 OK` on successful deletion.

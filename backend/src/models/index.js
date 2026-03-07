@@ -8,7 +8,11 @@ import { Expense } from './expense.model.js';
 // Setup Associations
 
 // A User creates many Trips (created_by)
-User.hasMany(Trip, { foreignKey: 'created_by', as: 'CreatedTrips' });
+User.hasMany(Trip, {
+  foreignKey: 'created_by',
+  as: 'CreatedTrips',
+  onDelete: 'CASCADE'
+});
 Trip.belongsTo(User, { foreignKey: 'created_by', as: 'Creator' });
 
 // Trip Members (Many-to-Many Users and Trips)

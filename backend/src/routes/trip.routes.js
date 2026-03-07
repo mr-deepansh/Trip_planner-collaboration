@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import {
-    createTrip,
-    getTrips,
-    getTripDetails,
-    addTripMember
+  createTrip,
+  getTrips,
+  getTripDetails,
+  addTripMember
 } from '../controllers/trip.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { checkRole } from '../middlewares/role.middleware.js';
@@ -18,8 +18,8 @@ router.route('/').post(createTrip).get(getTrips);
 
 // Protected by role middleware
 router
-    .route('/:tripId')
-    .get(checkRole(['OWNER', 'EDITOR', 'VIEWER']), getTripDetails);
+  .route('/:tripId')
+  .get(checkRole(['OWNER', 'EDITOR', 'VIEWER']), getTripDetails);
 
 router.route('/:tripId/members').post(checkRole(['OWNER']), addTripMember);
 

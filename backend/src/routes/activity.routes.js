@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import {
-    createActivity,
-    updateActivity,
-    deleteActivity,
-    reorderActivities
+  createActivity,
+  updateActivity,
+  deleteActivity,
+  reorderActivities
 } from '../controllers/activity.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { checkRole } from '../middlewares/role.middleware.js';
