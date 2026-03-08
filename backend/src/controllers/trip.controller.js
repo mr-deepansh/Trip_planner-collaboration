@@ -44,21 +44,37 @@ export const createTrip = asyncHandler(async (req, res) => {
 });
 
 export const getTrips = asyncHandler(async (req, res) => {
-  const { User } = await import('../models/index.js');
-  const userWithTrips = await User.findByPk(req.user.id, {
+  // Query from TripMember (junction table) directly instead of loading the full User object.
+  // This eliminates a massive left-outer-join across all 9 User columns.
+  // At 10M users scale this is the correct direction: narrow → wide, not wide → narrow.
+  const memberships = await TripMember.findAll({
+    where: { UserId: req.user.id },
+    attributes: ['role'],
     include: [
       {
         model: Trip,
-        as: 'Trips',
-        through: { attributes: ['role'] }
+        attributes: [
+          'id',
+          'title',
+          'start_date',
+          'end_date',
+          'created_by',
+          'createdAt',
+          'updatedAt'
+        ]
       }
     ]
   });
+
+  // Flatten into the same shape the frontend already expects: trip + TripMember.role
+  const trips = memberships.map((m) => ({
+    ...m.Trip.toJSON(),
+    TripMember: { role: m.role }
+  }));
+
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, userWithTrips.Trips, 'Trips fetched successfully')
-    );
+    .json(new ApiResponse(200, trips, 'Trips fetched successfully'));
 });
 
 export const getTripDetails = asyncHandler(async (req, res) => {

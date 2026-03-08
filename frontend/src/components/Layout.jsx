@@ -28,14 +28,14 @@ const Layout = () => {
             <Plane className="w-6 h-6" />
             <span>TripPlanner</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600">Hi, {user.name}</span>
+          <div className="flex items-center gap-3 sm:gap-4">
+            <span className="text-gray-600 hidden sm:inline text-sm sm:text-base">Hi, {user.name}</span>
             <button
               onClick={logout}
-              className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition"
+              className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition text-sm sm:text-base"
             >
-              <LogOut className="w-4 h-4" />
-              Logout
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="sm:inline">Logout</span>
             </button>
           </div>
         </div>

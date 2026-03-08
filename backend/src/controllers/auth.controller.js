@@ -3,27 +3,16 @@ import { ApiError } from '../utils/apiError.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendEmail } from '../utils/email.js';
+import { invalidateCachedUser } from '../utils/userCache.js';
 import crypto from 'crypto';
 import { passwordSchema } from '../validations/auth.validation.js';
 
-const generateAccessTokens = async (userId) => {
-  try {
-    const user = await User.findByPk(userId);
-    const accessToken = user.generateAccessToken();
-    return accessToken;
-  } catch {
-    throw new ApiError(
-      500,
-      'Something went wrong while generating access token'
-    );
-  }
-};
-
-export const handleOAuthLogin = asyncHandler(async (req, res) => {
+export const handleOAuthLogin = asyncHandler((req, res) => {
   if (!req.user) {
     return res.redirect(`${process.env.CORS_ORIGIN}/login?error=OAuthFailed`);
   }
-  const accessToken = await generateAccessTokens(req.user.id);
+  // req.user is already the Sequelize User instance from passport — no extra DB hit
+  const accessToken = req.user.generateAccessToken();
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
@@ -38,7 +27,6 @@ export const registerUser = asyncHandler(async (req, res) => {
   if (!name || !email || !password) {
     throw new ApiError(400, 'All fields are required');
   }
-
   const passwordValidation = passwordSchema.safeParse(password);
   if (!passwordValidation.success) {
     const errorMessage =
@@ -46,7 +34,6 @@ export const registerUser = asyncHandler(async (req, res) => {
       'Invalid password format. Please choose a stronger password.';
     throw new ApiError(400, errorMessage);
   }
-
   const existedUser = await User.findOne({ where: { email } });
   if (existedUser) {
     throw new ApiError(409, 'User with email already exists');
@@ -56,11 +43,9 @@ export const registerUser = asyncHandler(async (req, res) => {
     email,
     password
   });
-
   const createdUser = await User.findByPk(user.id, {
     attributes: { exclude: ['password'] }
   });
-
   if (!createdUser) {
     throw new ApiError(500, 'Something went wrong while registering the user');
   }
@@ -83,10 +68,15 @@ export const loginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new ApiError(401, 'Invalid user credentials');
   }
-  const accessToken = await generateAccessTokens(user.id);
-  const loggedInUser = await User.findByPk(user.id, {
-    attributes: { exclude: ['password'] }
-  });
+  // Generate token from the already-loaded user — skip redundant findByPk
+  const accessToken = user.generateAccessToken();
+  // Return user without password (destructure to avoid sending sensitive fields)
+  const {
+    password: _pwd,
+    passwordResetToken: _prt,
+    passwordResetExpires: _pre,
+    ...safeUser
+  } = user.toJSON();
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
@@ -98,7 +88,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user: loggedInUser,
+          user: safeUser,
           accessToken
         },
         'User logged in successfully'
@@ -107,6 +97,9 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 export const logoutUser = asyncHandler((req, res) => {
+  if (req.user?.id) {
+    invalidateCachedUser(req.user.id);
+  }
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
@@ -124,21 +117,14 @@ export const getMe = asyncHandler((req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  // 1) Get user based on POSTed email
   const user = await User.findOne({ where: { email: req.body.email } });
   if (!user) {
     throw new ApiError(404, 'There is no user with email address.');
-  } // Not optimal for security (you shouldn't report missing users) but good for now.
-
-  // 2) Generate the random reset token
+  }
   const resetToken = user.createPasswordResetToken();
   await user.save({ validate: false });
-
-  // 3) Send it to user's email
   const resetURL = `${process.env.CORS_ORIGIN}/reset-password/${resetToken}`;
-
   const message = `Forgot your password? Please use the following link to reset your password:\n${resetURL}\nIf you didn't forget your password, please ignore this email!`;
-
   const htmlMessage = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; background-color: #f8fafc;">
       <h2 style="color: #0f172a; text-align: center;">Reset Your Password</h2>
@@ -152,7 +138,6 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       <p style="color: #64748b; font-size: 12px; text-align: center;">For security reasons, this link will expire in 15 minutes.</p>
     </div>
   `;
-
   try {
     await sendEmail({
       email: user.email,
@@ -181,7 +166,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
   if (!password) {
     throw new ApiError(400, 'Please provide the new password');
   }
-
   const passwordValidation = passwordSchema.safeParse(password);
   if (!passwordValidation.success) {
     const errorMessage =
@@ -189,38 +173,32 @@ export const resetPassword = asyncHandler(async (req, res) => {
       'Invalid password format. Please choose a stronger password.';
     throw new ApiError(400, errorMessage);
   }
-
   // 1) Get user based on the token
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
   const user = await User.findOne({
     where: {
       passwordResetToken: hashedToken
     }
   });
-
   if (!user || Date.now() > new Date(user.passwordResetExpires).getTime()) {
     throw new ApiError(
       400,
       'This secure link has either expired or already been used. Please request a new one.'
     );
   }
-
   // 2) If token has not expired, and there is user, set the new password
   user.password = password; // The hook in User model will hash it
   user.passwordResetToken = null;
   user.passwordResetExpires = null;
   await user.save();
-
   // 3) Update changedPasswordAt property for the user (optional, if exists)
-
-  // 4) Log the user in, send JWT
-  const accessToken = await generateAccessTokens(user.id);
+  // 4) Log the user in, send JWT — use already-loaded user instance, no extra DB hit
+  const accessToken = user.generateAccessToken();
+  invalidateCachedUser(user.id);
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production'
   };
-
   return res
     .status(200)
     .cookie('accessToken', accessToken, options)

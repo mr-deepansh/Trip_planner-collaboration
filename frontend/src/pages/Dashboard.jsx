@@ -17,7 +17,7 @@ const Dashboard = () => {
     try {
       const res = await api.get("/trips");
       setTrips(res.data.data);
-    } catch (_error) {
+    } catch {
       console.error("Failed to fetch trips");
     }
   };
@@ -39,20 +39,20 @@ const Dashboard = () => {
       setTitle("");
       setStartDate("");
       setEndDate("");
-    } catch (_error) {
+    } catch {
       alert("Failed to create trip");
     }
   };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
           Your Trips
         </h1>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition shadow-md"
+          className="flex w-full sm:w-auto justify-center items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition shadow-md"
         >
           <Plus className="w-5 h-5" />
           New Trip
