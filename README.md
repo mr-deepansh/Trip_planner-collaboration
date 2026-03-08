@@ -165,5 +165,5 @@ This software architecture is provided "as is". While enterprise-grade security 
 ---
 
 <div align="center">
-  <p>Built with ❤️ for rapid, collaborative coordination.</p>
+  <p>Built with Deepansh, collaborative coordination.</p>
 </div>

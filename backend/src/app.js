@@ -44,6 +44,10 @@ app.use(
 );
 
 // Routes
+app.get('/api/v1', (req, res) => {
+  res.json({ message: 'Trip Planner API', version: '1.0.0' });
+});
+
 app.get('/api/v1/health', async (req, res) => {
   try {
     const dbStatus = await sequelize

@@ -5,10 +5,12 @@ const isProduction =
   process.env.NODE_ENV === 'production' &&
   !process.env.DATABASE_URL.includes('localhost');
 
+const shouldUseSSL = process.env.DB_SSL === 'true' || isProduction;
+
 export const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
 
-  dialectOptions: isProduction
+  dialectOptions: shouldUseSSL
     ? {
         ssl: {
           require: true,
