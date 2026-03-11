@@ -9,6 +9,7 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [oauthLoading, setOauthLoading] = useState(""); // "google" | "github" | ""
   const serverUrl = import.meta.env.VITE_SERVER_URL;
 
   if (user) return <Navigate to="/" replace />;
@@ -95,16 +96,36 @@ const Register = () => {
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <a
-              href={`${serverUrl}/api/v1/auth/google`}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              href={oauthLoading ? undefined : `${serverUrl}/api/v1/auth/google`}
+              onClick={(e) => {
+                if (oauthLoading) { e.preventDefault(); return; }
+                setOauthLoading("google");
+              }}
+              aria-disabled={!!oauthLoading}
+              className={`w-full inline-flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 transition ${
+                oauthLoading ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-50"
+              }`}
             >
+              {oauthLoading === "google" && (
+                <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              )}
               <span className="sr-only">Register with Google</span>
               Google
             </a>
             <a
-              href={`${serverUrl}/api/v1/auth/github`}
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-white hover:bg-gray-800"
+              href={oauthLoading ? undefined : `${serverUrl}/api/v1/auth/github`}
+              onClick={(e) => {
+                if (oauthLoading) { e.preventDefault(); return; }
+                setOauthLoading("github");
+              }}
+              aria-disabled={!!oauthLoading}
+              className={`w-full inline-flex justify-center items-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-white transition ${
+                oauthLoading ? "opacity-60 cursor-not-allowed" : "hover:bg-gray-800"
+              }`}
             >
+              {oauthLoading === "github" && (
+                <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              )}
               <span className="sr-only">Register with GitHub</span>
               GitHub
             </a>

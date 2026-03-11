@@ -94,6 +94,22 @@ export const loginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new ApiError(401, 'Invalid user credentials');
   }
+
+  // Clear any stale/expired password reset tokens on successful login
+  if (user.passwordResetToken) {
+    const isExpired =
+      !user.passwordResetExpires ||
+      Date.now() > new Date(user.passwordResetExpires).getTime();
+    if (isExpired) {
+      user.passwordResetToken = null;
+      user.passwordResetExpires = null;
+      await user.save({ validate: false });
+      logger.debug(
+        `[loginUser] Cleared expired passwordResetToken for userId=${user.id}`
+      );
+    }
+  }
+
   const accessToken = user.generateAccessToken();
   const {
     password: _pwd,
