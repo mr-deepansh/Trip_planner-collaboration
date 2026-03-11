@@ -11,10 +11,24 @@ import { sequelize } from './config/db.js';
 
 const app = express();
 
+// Allow multiple comma-separated origins (e.g. localhost:4173, production URL)
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 // Middlewares
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, Postman) or whitelisted origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn(`CORS blocked: ${origin}`);
+        callback(new Error(`CORS policy does not allow origin: ${origin}`));
+      }
+    },
     credentials: true
   })
 );

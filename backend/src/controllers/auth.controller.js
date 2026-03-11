@@ -7,18 +7,20 @@ import { invalidateCachedUser } from '../utils/userCache.js';
 import crypto from 'crypto';
 import { passwordSchema } from '../validations/auth.validation.js';
 
-const FRONTEND_URL = process.env.CORS_ORIGIN;
+const FRONTEND_URL = (process.env.CORS_ORIGIN || '').split(',')[0].trim();
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 24 * 60 * 60 * 1000 // 1 day
+});
 
 export const handleOAuthLogin = asyncHandler((req, res) => {
   if (!req.user) {
     return res.redirect(`${FRONTEND_URL}/login?error=OAuthFailed`);
   }
   const accessToken = req.user.generateAccessToken();
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  };
-  res.cookie('accessToken', accessToken, options);
+  res.cookie('accessToken', accessToken, cookieOptions());
   res.redirect(`${FRONTEND_URL}/`);
 });
 
@@ -76,13 +78,9 @@ export const loginUser = asyncHandler(async (req, res) => {
     passwordResetExpires: _pre,
     ...safeUser
   } = user.toJSON();
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  };
   return res
     .status(200)
-    .cookie('accessToken', accessToken, options)
+    .cookie('accessToken', accessToken, cookieOptions())
     .json(
       new ApiResponse(
         200,
@@ -99,13 +97,9 @@ export const logoutUser = asyncHandler((req, res) => {
   if (req.user?.id) {
     invalidateCachedUser(req.user.id);
   }
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  };
   return res
     .status(200)
-    .clearCookie('accessToken', options)
+    .clearCookie('accessToken', cookieOptions())
     .json(new ApiResponse(200, {}, 'User logged out successfully'));
 });
 
@@ -139,6 +133,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   `;
   try {
     await sendEmail({
+      from: `${process.env.EMAIL_FROM_NAME || 'Trip Planner'} <${process.env.EMAIL_FROM || process.env.EMAIL_USERNAME}>`,
       email: user.email,
       subject: 'Trip Planner - Secure Password Reset Link',
       text: message,
@@ -194,13 +189,9 @@ export const resetPassword = asyncHandler(async (req, res) => {
   // 4) Log the user in, send JWT — use already-loaded user instance, no extra DB hit
   const accessToken = user.generateAccessToken();
   invalidateCachedUser(user.id);
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  };
   return res
     .status(200)
-    .cookie('accessToken', accessToken, options)
+    .cookie('accessToken', accessToken, cookieOptions())
     .json(
       new ApiResponse(200, { accessToken }, 'Password restored successfully')
     );
