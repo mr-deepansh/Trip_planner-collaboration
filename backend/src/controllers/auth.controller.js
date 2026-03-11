@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendEmail } from '../utils/email.js';
 import { invalidateCachedUser } from '../utils/userCache.js';
+import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
 import { passwordSchema } from '../validations/auth.validation.js';
 
@@ -16,11 +17,33 @@ const cookieOptions = () => ({
 });
 
 export const handleOAuthLogin = asyncHandler((req, res) => {
+  const provider = req.path.includes('google') ? 'Google' : 'GitHub';
+
+  logger.debug(`[OAuth handleOAuthLogin] Triggered for provider: ${provider}`);
+  logger.debug(
+    `[OAuth handleOAuthLogin] req.user: ${JSON.stringify(req.user)}`
+  );
+
   if (!req.user) {
+    logger.warn(
+      `[OAuth handleOAuthLogin] req.user is null — OAuth strategy failed for ${provider}`
+    );
     return res.redirect(`${FRONTEND_URL}/login?error=OAuthFailed`);
   }
+
   const accessToken = req.user.generateAccessToken();
-  res.cookie('accessToken', accessToken, cookieOptions());
+  logger.debug(
+    `[OAuth handleOAuthLogin] Token generated for userId=${req.user.id} (first 30): ${accessToken.slice(0, 30)}...`
+  );
+
+  const opts = cookieOptions();
+  logger.debug(
+    `[OAuth handleOAuthLogin] Setting cookie with options: ${JSON.stringify(opts)}`
+  );
+
+  res.cookie('accessToken', accessToken, opts);
+
+  logger.debug(`[OAuth handleOAuthLogin] Redirecting to ${FRONTEND_URL}/`);
   res.redirect(`${FRONTEND_URL}/`);
 });
 
@@ -104,6 +127,18 @@ export const logoutUser = asyncHandler((req, res) => {
 });
 
 export const getMe = asyncHandler((req, res) => {
+  // DEBUG: inspect what verifyJWT attached
+  logger.debug(`[GET /me] req.user: ${JSON.stringify(req.user)}`);
+  logger.debug(`[GET /me] Cookies: ${JSON.stringify(req.cookies)}`);
+  logger.debug(`[GET /me] Origin: ${req.headers?.origin || 'none'}`);
+
+  if (!req.user) {
+    logger.warn(
+      '[GET /me] req.user is undefined — verifyJWT may have failed silently'
+    );
+    throw new ApiError(401, 'User not authenticated');
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, req.user, 'User details fetched successfully'));
