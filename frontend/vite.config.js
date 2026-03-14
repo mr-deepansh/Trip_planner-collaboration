@@ -4,7 +4,26 @@ import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: "spa-fallback",
+      generateBundle(options, bundle) {
+        const indexHtml = bundle["index.html"];
+        if (indexHtml) {
+          const routes = ["login", "register", "forgot-password", "reset-password"];
+          routes.forEach((route) => {
+            this.emitFile({
+              type: "asset",
+              fileName: `${route}.html`,
+              source: indexHtml.source,
+            });
+          });
+        }
+      },
+    },
+  ],
 
   server: {
     host: "0.0.0.0",
