@@ -7,6 +7,7 @@ export const sendEmail = async ({ from, email, subject, text, html }) => {
     const pass = process.env.EMAIL_PASSWORD || process.env.EMAIL_PASS;
     const host = process.env.EMAIL_HOST || 'smtp.ethereal.email';
     const port = parseInt(process.env.EMAIL_PORT || '587', 10);
+    const secure = process.env.EMAIL_SECURE === 'true' || port === 465;
 
     let transporter;
 
@@ -14,21 +15,24 @@ export const sendEmail = async ({ from, email, subject, text, html }) => {
       // Local Dev Fallback: Create ethereal test account dynamically if no credentials provided
       const testAccount = await nodemailer.createTestAccount();
       transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
+        host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+        port: parseInt(process.env.EMAIL_PORT || '587', 10),
+        secure: process.env.EMAIL_SECURE === 'true',
         auth: {
           user: testAccount.user,
           pass: testAccount.pass
         }
       });
     } else {
-      // Production: Gmail SMTP via STARTTLS (port 587 = secure:false)
+      // Production: Gmail SMTP
       transporter = nodemailer.createTransport({
         host,
         port,
-        secure: port === 465, // true only for TLS on port 465; false for 587 STARTTLS
-        auth: { user, pass }
+        secure,
+        auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 5000,
+        socketTimeout: 10000
       });
     }
 
