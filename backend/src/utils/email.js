@@ -30,9 +30,13 @@ export const sendEmail = async ({ from, email, subject, text, html }) => {
         port,
         secure,
         auth: { user, pass },
-        connectionTimeout: 10000,
-        greetingTimeout: 5000,
-        socketTimeout: 10000
+        connectionTimeout: 60000,
+        greetingTimeout: 30000,
+        socketTimeout: 60000,
+        pool: true,
+        tls: {
+          rejectUnauthorized: false
+        }
       });
     }
 

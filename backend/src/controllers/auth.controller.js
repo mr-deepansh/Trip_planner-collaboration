@@ -9,12 +9,17 @@ import crypto from 'crypto';
 import { passwordSchema } from '../validations/auth.validation.js';
 
 const FRONTEND_URL = (process.env.CORS_ORIGIN || '').split(',')[0].trim();
-const cookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  maxAge: 24 * 60 * 60 * 1000 // 1 day
-});
+const cookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+    domain: isProduction ? undefined : 'localhost',
+    path: '/'
+  };
+};
 
 export const handleOAuthLogin = asyncHandler((req, res) => {
   const provider = req.path.includes('google') ? 'Google' : 'GitHub';

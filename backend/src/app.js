@@ -8,6 +8,7 @@ import passport from './config/passport.js';
 import morgan from 'morgan';
 import { logger } from './utils/logger.js';
 import { sequelize } from './config/db.js';
+import { requestContext } from './middlewares/requestContext.middleware.js';
 
 const app = express();
 
@@ -21,7 +22,6 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman) or whitelisted origins
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -33,6 +33,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: '16kb' }));
+app.use(requestContext);
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -58,8 +59,8 @@ app.use(
 );
 
 // Routes
-app.get('/api/v1', (req, res) => {
-  res.json({ message: 'Trip Planner API', version: '1.0.0' });
+app.get('/api/${version}/health', (req, res) => {
+  res.json({ message: 'Trip Planner API', version: process.env.VERSION });
 });
 
 app.get('/api/v1/health', async (req, res) => {
