@@ -18,6 +18,9 @@ const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .map((o) => o.trim())
   .filter(Boolean);
 
+const morganFormat =
+  ':method :url :status :res[content-length] - :response-time ms';
+
 // Middlewares
 app.use(
   cors({
@@ -33,13 +36,10 @@ app.use(
   })
 );
 app.use(express.json({ limit: '16kb' }));
-app.use(requestContext);
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(cookieParser());
 app.use(passport.initialize());
-
-const morganFormat =
-  ':method :url :status :res[content-length] - :response-time ms';
+app.use(requestContext);
 app.use(
   morgan(morganFormat, {
     stream: {
@@ -59,11 +59,11 @@ app.use(
 );
 
 // Routes
-app.get('/api/${version}/health', (req, res) => {
+app.get(`/api`, (req, res) => {
   res.json({ message: 'Trip Planner API', version: process.env.VERSION });
 });
 
-app.get('/api/v1/health', async (req, res) => {
+app.get(`/api/${process.env.VERSION}/health`, async (req, res) => {
   try {
     const dbStatus = await sequelize
       .authenticate()

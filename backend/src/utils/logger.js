@@ -14,7 +14,9 @@ const SENSITIVE_FIELDS = [
 
 const maskSensitive = winston.format((info) => {
   const mask = (obj) => {
-    if (!obj || typeof obj !== 'object') return obj;
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
     return Object.fromEntries(
       Object.entries(obj).map(([k, v]) => [
         k,

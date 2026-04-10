@@ -55,7 +55,7 @@ async function startServer() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-async function shutdown(signal) {
+function shutdown(signal) {
   logger.info(`Received ${signal || 'shutdown'} — closing server...`);
   if (server) {
     server.close(() => {

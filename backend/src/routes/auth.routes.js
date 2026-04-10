@@ -12,7 +12,6 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import passport from 'passport';
 
 const router = Router();
-// Use first CORS origin as PRIMARY frontend URL
 const FRONTEND_URL = (process.env.CORS_ORIGIN || '').split(',')[0].trim();
 
 // Public routes

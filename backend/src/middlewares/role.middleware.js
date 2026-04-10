@@ -1,4 +1,4 @@
-import { ApiError } from '../utils/apiError.js';
+import ApiError from '../utils/apiError.js';
 import { TripMember } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
