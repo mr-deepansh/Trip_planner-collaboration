@@ -8,7 +8,7 @@ export const checkRole = (allowedRoles) =>
     const tripId = req.params.tripId || req.body.tripId;
 
     if (!tripId) {
-      throw new ApiError(400, 'Trip ID is missing in request');
+      throw ApiError.badRequest('Trip ID is missing in request');
     }
     const membership = await TripMember.findOne({
       where: {
@@ -17,11 +17,10 @@ export const checkRole = (allowedRoles) =>
       }
     });
     if (!membership) {
-      throw new ApiError(403, 'You do not have access to this trip');
+      throw ApiError.forbidden('You do not have access to this trip');
     }
     if (!allowedRoles.includes(membership.role)) {
-      throw new ApiError(
-        403,
+      throw ApiError.forbidden(
         'You do not have the required permissions to perform this action'
       );
     }

@@ -8,12 +8,12 @@ export const createActivity = asyncHandler(async (req, res) => {
   const { dayId, title, description, start_time, end_time, type } = req.body;
 
   if (!dayId || !title) {
-    throw new ApiError(400, 'dayId and title are required');
+    throw ApiError.badRequest('dayId and title are required');
   }
   // Verify day belongs to trip
   const day = await Day.findOne({ where: { id: dayId, TripId: tripId } });
   if (!day) {
-    throw new ApiError(404, 'Day not found in this trip');
+    throw ApiError.notFound('Day not found in this trip');
   }
   // Get max order_index for the day
   const maxOrder = await Activity.max('order_index', {
@@ -31,7 +31,7 @@ export const createActivity = asyncHandler(async (req, res) => {
   });
   return res
     .status(201)
-    .json(new ApiResponse(201, activity, 'Activity created successfully'));
+    .json(ApiResponse.created(activity, 'Activity created successfully'));
 });
 
 export const updateActivity = asyncHandler(async (req, res) => {
@@ -40,13 +40,13 @@ export const updateActivity = asyncHandler(async (req, res) => {
 
   const activity = await Activity.findByPk(activityId);
   if (!activity) {
-    throw new ApiError(404, 'Activity not found');
+    throw ApiError.notFound('Activity not found');
   }
   const updatedActivity = await activity.update(updates);
   return res
     .status(200)
     .json(
-      new ApiResponse(200, updatedActivity, 'Activity updated successfully')
+      ApiResponse.success(updatedActivity, 'Activity updated successfully')
     );
 });
 
@@ -55,12 +55,12 @@ export const deleteActivity = asyncHandler(async (req, res) => {
 
   const activity = await Activity.findByPk(activityId);
   if (!activity) {
-    throw new ApiError(404, 'Activity not found');
+    throw ApiError.notFound('Activity not found');
   }
   await activity.destroy();
   return res
     .status(200)
-    .json(new ApiResponse(200, null, 'Activity deleted successfully'));
+    .json(ApiResponse.success(null, 'Activity deleted successfully'));
 });
 
 export const reorderActivities = asyncHandler(async (req, res) => {
@@ -69,7 +69,7 @@ export const reorderActivities = asyncHandler(async (req, res) => {
   const { activities } = req.body;
 
   if (!Array.isArray(activities)) {
-    throw new ApiError(400, 'Activities array is required');
+    throw ApiError.badRequest('Activities array is required');
   }
   for (const item of activities) {
     if (item.id && item.order_index !== undefined) {
@@ -81,5 +81,5 @@ export const reorderActivities = asyncHandler(async (req, res) => {
   }
   return res
     .status(200)
-    .json(new ApiResponse(200, null, 'Activities reordered successfully'));
+    .json(ApiResponse.success(null, 'Activities reordered successfully'));
 });

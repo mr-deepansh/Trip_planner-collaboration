@@ -21,7 +21,7 @@ export const createTrip = asyncHandler(async (req, res) => {
   const { title, start_date, end_date } = req.body;
 
   if (!title || !start_date || !end_date) {
-    throw new ApiError(400, 'Title, start_date, and end_date are required');
+    throw ApiError.badRequest('Title, start_date, and end_date are required');
   }
   // 1. Create Trip
   const trip = await Trip.create({
@@ -40,7 +40,7 @@ export const createTrip = asyncHandler(async (req, res) => {
   await generateDaysForTrip(trip.id, start_date, end_date);
   return res
     .status(201)
-    .json(new ApiResponse(201, trip, 'Trip created successfully'));
+    .json(ApiResponse.created(trip, 'Trip created successfully'));
 });
 
 export const getTrips = asyncHandler(async (req, res) => {
@@ -74,7 +74,7 @@ export const getTrips = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, trips, 'Trips fetched successfully'));
+    .json(ApiResponse.success(trips, 'Trips fetched successfully'));
 });
 
 export const getTripDetails = asyncHandler(async (req, res) => {
@@ -97,11 +97,11 @@ export const getTripDetails = asyncHandler(async (req, res) => {
     order: [[Day, 'date', 'ASC']]
   });
   if (!trip) {
-    throw new ApiError(404, 'Trip not found');
+    throw ApiError.notFound('Trip not found');
   }
   return res
     .status(200)
-    .json(new ApiResponse(200, trip, 'Trip details fetched successfully'));
+    .json(ApiResponse.success(trip, 'Trip details fetched successfully'));
 });
 
 export const addTripMember = asyncHandler(async (req, res) => {
@@ -109,18 +109,17 @@ export const addTripMember = asyncHandler(async (req, res) => {
   const { email, role } = req.body;
 
   if (!email || !role) {
-    throw new ApiError(400, 'Email and role are required for invitation');
+    throw ApiError.badRequest('Email and role are required for invitation');
   }
   const validRoles = ['OWNER', 'EDITOR', 'VIEWER'];
   if (!validRoles.includes(role)) {
-    throw new ApiError(400, 'Invalid role provided');
+    throw ApiError.badRequest('Invalid role provided');
   }
   // here dynamic import
   const { User, TripMember } = await import('../models/index.js');
   const userToAdd = await User.findOne({ where: { email } });
   if (!userToAdd) {
-    throw new ApiError(
-      404,
+    throw ApiError.notFound(
       'User with this email not found. They must sign up first.'
     );
   }
@@ -128,7 +127,7 @@ export const addTripMember = asyncHandler(async (req, res) => {
     where: { TripId: tripId, UserId: userToAdd.id }
   });
   if (existingMember) {
-    throw new ApiError(400, 'User is already a member of this trip');
+    throw ApiError.badRequest('User is already a member of this trip');
   }
   const newMember = await TripMember.create({
     TripId: tripId,
@@ -137,8 +136,7 @@ export const addTripMember = asyncHandler(async (req, res) => {
   });
 
   return res.status(201).json(
-    new ApiResponse(
-      201,
+    ApiResponse.created(
       {
         member: newMember,
         user: { name: userToAdd.name, email: userToAdd.email }

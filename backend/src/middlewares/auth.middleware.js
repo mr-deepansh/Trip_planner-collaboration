@@ -19,7 +19,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
       logger.warn('[verifyJWT] No token found — rejecting with 401');
-      throw new ApiError(401, 'Unauthorized request');
+      throw ApiError.unauthorized('Unauthorized request');
     }
     logger.debug(
       `[verifyJWT] Token source: ${req.cookies?.accessToken ? 'cookie' : 'Authorization header'}`
@@ -54,7 +54,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         logger.warn(
           `[verifyJWT] No user found in DB for id=${decodedToken.id}`
         );
-        throw new ApiError(401, 'Invalid Access Token');
+        throw ApiError.unauthorized('Invalid Access Token');
       }
       logger.debug(
         `[verifyJWT] DB user found: ${JSON.stringify(user.toJSON())}`
@@ -71,6 +71,6 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   } catch (error) {
     logger.error(`[verifyJWT] Auth failed: ${error?.message}`);
     logger.debug(`[verifyJWT] Error stack: ${error?.stack}`);
-    throw new ApiError(401, error?.message || 'Invalid access token');
+    throw ApiError.unauthorized(error?.message || 'Invalid access token');
   }
 });

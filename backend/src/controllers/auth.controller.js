@@ -63,11 +63,11 @@ export const registerUser = asyncHandler(async (req, res) => {
     const errorMessage =
       passwordValidation.error?.errors?.[0]?.message ||
       'Invalid password format. Please choose a stronger password.';
-    throw new ApiError(400, errorMessage);
+    throw ApiError.notFound(errorMessage);
   }
   const existedUser = await User.findOne({ where: { email } });
   if (existedUser) {
-    throw new ApiError(409, 'User with email already exists');
+    throw ApiError.badRequest('User already exists');
   }
   const user = await User.create({
     name,
@@ -89,7 +89,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    throw new ApiError(400, 'Email and password are required');
+    throw ApiError.badRequest('Email and password are required');
   }
   const user = await User.findOne({ where: { email } });
   if (!user) {
@@ -97,7 +97,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, 'Invalid user credentials');
+    throw ApiError.unauthorized('Invalid user credentials');
   }
   const accessToken = user.generateAccessToken();
   const {
@@ -110,8 +110,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     .status(200)
     .cookie('accessToken', accessToken, cookieOptions())
     .json(
-      new ApiResponse(
-        200,
+      ApiResponse.success(
         {
           user: safeUser,
           accessToken
@@ -128,7 +127,7 @@ export const logoutUser = asyncHandler((req, res) => {
   return res
     .status(200)
     .clearCookie('accessToken', cookieOptions())
-    .json(new ApiResponse(200, {}, 'User logged out successfully'));
+    .json(ApiResponse.success({}, 'User logged out successfully'));
 });
 
 export const getMe = asyncHandler((req, res) => {
@@ -141,18 +140,18 @@ export const getMe = asyncHandler((req, res) => {
     logger.warn(
       '[GET /me] req.user is undefined — verifyJWT may have failed silently'
     );
-    throw new ApiError(401, 'User not authenticated');
+    throw ApiError.unauthorized('User not authenticated');
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, req.user, 'User details fetched successfully'));
+    .json(ApiResponse.success(req.user, 'User details fetched successfully'));
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ where: { email: req.body.email } });
   if (!user) {
-    throw new ApiError(404, 'There is no user with email address.');
+    throw ApiError.notFound('There is no user with email address.');
   }
   const resetToken = user.createPasswordResetToken();
   await user.save({ validate: false });
@@ -181,13 +180,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     });
     return res
       .status(200)
-      .json(new ApiResponse(200, null, 'Token sent to email!'));
+      .json(ApiResponse.success(null, 'Token sent to email!'));
   } catch {
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
     await user.save({ validate: false });
-    throw new ApiError(
-      500,
+    throw ApiError.internal(
       'There was an error sending the email. Try again later!'
     );
   }
@@ -198,14 +196,14 @@ export const resetPassword = asyncHandler(async (req, res) => {
   const { password } = req.body;
 
   if (!password) {
-    throw new ApiError(400, 'Please provide the new password');
+    throw ApiError.badRequest('Please provide the new password');
   }
   const passwordValidation = passwordSchema.safeParse(password);
   if (!passwordValidation.success) {
     const errorMessage =
       passwordValidation.error?.errors?.[0]?.message ||
       'Invalid password format. Please choose a stronger password.';
-    throw new ApiError(400, errorMessage);
+    throw ApiError.badRequest(errorMessage);
   }
   // 1) Get user based on the token
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -215,8 +213,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
     }
   });
   if (!user || Date.now() > new Date(user.passwordResetExpires).getTime()) {
-    throw new ApiError(
-      400,
+    throw ApiError.badRequest(
       'This secure link has either expired or already been used. Please request a new one.'
     );
   }
@@ -233,6 +230,6 @@ export const resetPassword = asyncHandler(async (req, res) => {
     .status(200)
     .cookie('accessToken', accessToken, cookieOptions())
     .json(
-      new ApiResponse(200, { accessToken }, 'Password restored successfully')
+      ApiResponse.success({ accessToken }, 'Password restored successfully')
     );
 });
