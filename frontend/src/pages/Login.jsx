@@ -9,7 +9,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const serverUrl = import.meta.env.VITE_SERVER_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -104,14 +104,14 @@ const Login = () => {
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <a
-              href={`${serverUrl}/api/v2/auth/google`}
+              href={`${apiUrl}/auth/google`}
               className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
               <span className="sr-only">Sign in with Google</span>
               Google
             </a>
             <a
-              href={`${serverUrl}/api/v2/auth/github`}
+              href={`${apiUrl}/auth/github`}
               className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-gray-900 text-sm font-medium text-white hover:bg-gray-800"
             >
               <span className="sr-only">Sign in with GitHub</span>

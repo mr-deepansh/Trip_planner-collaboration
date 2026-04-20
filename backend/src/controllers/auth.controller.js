@@ -8,7 +8,8 @@ import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
 import { passwordSchema } from '../validations/auth.validation.js';
 
-const FRONTEND_URL = (process.env.CORS_ORIGIN || '').split(',')[0].trim();
+const frontendUrl = process.env.CORS_ORIGIN.trim();
+
 const cookieOptions = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   return {
@@ -33,7 +34,7 @@ export const handleOAuthLogin = asyncHandler((req, res) => {
     logger.warn(
       `[OAuth handleOAuthLogin] req.user is null — OAuth strategy failed for ${provider}`
     );
-    return res.redirect(`${FRONTEND_URL}/login?error=OAuthFailed`);
+    return res.redirect(`${frontendUrl}/login?error=OAuthFailed`);
   }
 
   const accessToken = req.user.generateAccessToken();
@@ -48,8 +49,8 @@ export const handleOAuthLogin = asyncHandler((req, res) => {
 
   res.cookie('accessToken', accessToken, opts);
 
-  logger.debug(`[OAuth handleOAuthLogin] Redirecting to ${FRONTEND_URL}/`);
-  res.redirect(`${FRONTEND_URL}/`);
+  logger.debug(`[OAuth handleOAuthLogin] Redirecting to ${frontendUrl}/`);
+  res.redirect(`${frontendUrl}/`);
 });
 
 export const registerUser = asyncHandler(async (req, res) => {
