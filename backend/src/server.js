@@ -2,7 +2,7 @@ import 'dotenv/config';
 import app from './app.js';
 import './models/index.js';
 import { connectDB } from './config/db.js';
-import { logger } from './utils/logger.js';
+import { logger } from './observability/logger.js';
 
 const REQUIRED_ENV_VARS = [
   'PORT',
@@ -31,11 +31,9 @@ let server;
 async function startServer() {
   try {
     await connectDB();
-
     server = app.listen(PORT, () => {
       logger.info(`Server running in [${ENV}] mode on port ${PORT}`);
     });
-
     server.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         logger.error(
@@ -43,7 +41,6 @@ async function startServer() {
         );
         process.exit(1);
       }
-
       logger.error(`Server error: ${err.message}`);
       process.exit(1);
     });

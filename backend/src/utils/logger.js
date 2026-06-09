@@ -3,7 +3,9 @@ import 'winston-daily-rotate-file';
 import { AsyncLocalStorage } from 'async_hooks';
 
 const { combine, timestamp, printf, colorize, json, errors } = winston.format;
+
 export const asyncLocalStorage = new AsyncLocalStorage();
+
 const SENSITIVE_FIELDS = [
   'password',
   'token',
@@ -17,6 +19,7 @@ const maskSensitive = winston.format((info) => {
     if (!obj || typeof obj !== 'object') {
       return obj;
     }
+
     return Object.fromEntries(
       Object.entries(obj).map(([k, v]) => [
         k,
@@ -26,16 +29,19 @@ const maskSensitive = winston.format((info) => {
       ])
     );
   };
+
   return { ...info, ...mask(info) };
 });
 
 const injectContext = winston.format((info) => {
   const ctx = asyncLocalStorage.getStore();
+
   if (ctx) {
     info.requestId = ctx.requestId;
     info.userId = ctx.userId ?? 'anonymous';
     info.traceId = ctx.traceId;
   }
+
   return info;
 });
 
@@ -43,11 +49,14 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const devFormat = combine(
   colorize({ all: true }),
-  timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  timestamp({
+    format: () => new Date().toISOString()
+  }),
   errors({ stack: true }),
   injectContext(),
   printf(({ level, message, timestamp, stack, requestId }) => {
     const reqPart = requestId ? ` [${requestId}]` : '';
+
     return `[${timestamp}]${reqPart} ${level}: ${stack || message}`;
   })
 );
@@ -72,21 +81,46 @@ const rotateOptions = (level) => ({
 
 export const logger = winston.createLogger({
   level: isProduction ? 'info' : 'debug',
+
   defaultMeta: {
     service: process.env.SERVICE_NAME ?? 'trip-planner-api',
+
     version: process.env.npm_package_version ?? '0.0.0',
+
     env: process.env.NODE_ENV
   },
+
   format: isProduction ? prodFormat : devFormat,
+
   transports: [
     new winston.transports.Console(),
+
     new winston.transports.DailyRotateFile(rotateOptions('error')),
+
     new winston.transports.DailyRotateFile(rotateOptions('combined'))
   ],
+
   exceptionHandlers: [
-    new winston.transports.File({ filename: 'logs/exceptions.log' })
+    new winston.transports.File({
+      filename: 'logs/exceptions.log'
+    })
   ],
+
   rejectionHandlers: [
-    new winston.transports.File({ filename: 'logs/rejections.log' })
+    new winston.transports.File({
+      filename: 'logs/rejections.log'
+    })
   ]
+});
+
+export const requestLogger = logger.child({
+  channel: 'request'
+});
+
+export const infraLogger = logger.child({
+  channel: 'infrastructure'
+});
+
+export const auditLogger = logger.child({
+  channel: 'audit'
 });
